@@ -96,7 +96,7 @@ ORDER BY Pris DESC;
 
 
 -- 3: Modifiera data
-BEGIN TRANSACTION modifiera_data ;
+START TRANSACTION;
 
 -- Updatera en kunds e-postadress
 UPDATE Kunder
@@ -104,8 +104,7 @@ SET Email = 'aarenbs@hotmail.com'
 WHERE KundID = '1';
 
 -- Ta bort en specifik kund
-DELETE FROM Kunder
-WHERE KundID = '2';
+-- THIS DOESNT WORKKKDELETE FROM Kunder WHERE KundID = 2;
 
 -- Säkerställ att ändringarna kan ångras med transaktioner
 ROLLBACK;
@@ -126,12 +125,34 @@ LEFT JOIN Beställningar
 ON Kunder.KundID = Beställningar.KundID;
 
 -- Använd GROUP BY för att räkna antal beställningar per kund
-SELECT KundID, COUNT(KundID) AS [Antal beställningar]
+SELECT KundID, COUNT(KundID) AS AntalBeställningar
 FROM Beställningar
 GROUP BY KundID;
 
 -- Använd HAVING för att endast visa kunder som har gjort fler än 2 beställningar
-SELECT KundID, COUNT(KundID) AS [Antal beställningar]
+SELECT KundID, COUNT(KundID) AS AntalBeställningar
 FROM Beställningar
 GROUP BY KundID
 HAVING COUNT(KundID) > 2;
+
+
+-- 5: index, constrains & triggers
+
+-- Skapa ett index på e-post i Kunder
+
+-- Införa en constraint som säkerställer att priset på produkter alltid är över 0
+
+-- Skapa en trigger som minska lagersaldo efter en order
+
+-- Skapa en trigger som loggar när en ny kund registreras
+
+
+-- 6: backup & restore
+
+-- Skapa en backup av din databas
+
+-- visa att du kan återställa databasen från backup
+
+-- testa att du kan köra frågor på den återställda databasen
+
+
