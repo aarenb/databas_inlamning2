@@ -96,19 +96,20 @@ ORDER BY Pris DESC;
 
 
 -- 3: Modifiera data
-START TRANSACTION;
 
+START TRANSACTION;
 -- Updatera en kunds e-postadress
+
 UPDATE Kunder
 SET Email = 'aarenbs@hotmail.com'
 WHERE KundID = '1';
 
 -- Ta bort en specifik kund
--- THIS DOESNT WORKKKDELETE FROM Kunder WHERE KundID = 2;
+-- THIS DOESNT WORKKK 
+DELETE FROM Kunder WHERE KundID = 2;
 
 -- Säkerställ att ändringarna kan ångras med transaktioner
 ROLLBACK;
-
 
 -- 4: Arbeta med JOINs & GROUP BY
 
@@ -139,13 +140,37 @@ HAVING COUNT(KundID) > 2;
 -- 5: index, constrains & triggers
 
 -- Skapa ett index på e-post i Kunder
+CREATE INDEX idx_email
+ON Kunder (Email);
 
 -- Införa en constraint som säkerställer att priset på produkter alltid är över 0
 
 -- Skapa en trigger som minska lagersaldo efter en order
+DELIMITER $$
+
+CREATE TRIGGER uppdatera_saldo
+AFTER INSERT ON Orderrader
+FOR EACH ROW
+BEGIN
+    UPDATE Böcker
+    SET Lagerstatus = Lagerstatus - NEW.Antal
+    WHERE ProduktID = NEW.ProduktID;
+END $$ 
+
+DELIMITER;
 
 -- Skapa en trigger som loggar när en ny kund registreras
+DELIMITER $$
 
+CREATE TRIGGER logga_nykund
+AFTER INSERT ON Kunder
+FOR EACH ROW
+BEGIN
+    SELECT * FROM Kunder
+    WHERE KundID = NEW.KundID;
+END $$
+
+DELIMITER;
 
 -- 6: backup & restore
 
