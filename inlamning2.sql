@@ -13,7 +13,7 @@ ISBN VARCHAR(13) PRIMARY KEY,
 Titel VARCHAR(100) NOT NULL,
 Författare VARCHAR(200) NOT NULL,
 Lagerstatus INT NOT NULL,
-Pris DECIMAL(10,2) NOT NULL CHECK(Pris > 0)
+Pris DECIMAL(10,2) NOT NULL
 );
 
 -- Kund tabell
@@ -32,6 +32,7 @@ KundID INT,
 TotalBelopp DECIMAL(10,2) NOT NULL CHECK(TotalBelopp > 0),
 Datum TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 FOREIGN KEY (KundID) REFERENCES Kunder(KundID)
+ON DELETE CASCADE
 );
 
 -- Orderrad tabell
@@ -42,6 +43,7 @@ Ordernummer INT,
 Antal INT,
 FOREIGN KEY (ISBN) REFERENCES Böcker(ISBN),
 FOREIGN KEY (Ordernummer) REFERENCES Beställningar(Ordernummer)
+ON DELETE CASCADE
 );
 
 
@@ -99,17 +101,19 @@ ORDER BY Pris DESC;
 
 START TRANSACTION;
 -- Updatera en kunds e-postadress
+-- Ta bort en specifik kund
+-- Säkerställ att ändringarna kan ångras med transaktioner
 
 UPDATE Kunder
 SET Email = 'aarenbs@hotmail.com'
 WHERE KundID = '1';
 
--- Ta bort en specifik kund
--- THIS DOESNT WORKKK 
 DELETE FROM Kunder WHERE KundID = 2;
+SELECT * FROM Kunder;
 
--- Säkerställ att ändringarna kan ångras med transaktioner
 ROLLBACK;
+
+SELECT * FROM Kunder;
 
 -- 4: Arbeta med JOINs & GROUP BY
 
@@ -126,15 +130,19 @@ LEFT JOIN Beställningar
 ON Kunder.KundID = Beställningar.KundID;
 
 -- Använd GROUP BY för att räkna antal beställningar per kund
-SELECT KundID, COUNT(KundID) AS AntalBeställningar
+SELECT Kunder.Namn, COUNT(Beställningar.Ordernummer) AS AntalBeställningar
 FROM Beställningar
-GROUP BY KundID;
+INNER JOIN Kunder 
+ON Kunder.KundID = Beställningar.KundID
+GROUP BY Kunder.Namn;
 
 -- Använd HAVING för att endast visa kunder som har gjort fler än 2 beställningar
-SELECT KundID, COUNT(KundID) AS AntalBeställningar
+SELECT Kunder.Namn, COUNT(Beställningar.Ordernummer) AS AntalBeställningar
 FROM Beställningar
-GROUP BY KundID
-HAVING COUNT(KundID) > 2;
+INNER JOIN Kunder 
+ON Kunder.KundID = Beställningar.KundID
+GROUP BY Kunder.Namn
+HAVING COUNT(Beställningar.Ordernummer) > 2;
 
 
 -- 5: index, constrains & triggers
@@ -143,7 +151,11 @@ HAVING COUNT(KundID) > 2;
 CREATE INDEX idx_email
 ON Kunder (Email);
 
+SHOW INDEX FROM Kunder;
+
 -- Införa en constraint som säkerställer att priset på produkter alltid är över 0
+ALTER TABLE Böcker
+ADD CONSTRAINT Check_pris CHECK(Pris > 0)
 
 -- Skapa en trigger som minska lagersaldo efter en order
 DELIMITER $$
@@ -154,23 +166,30 @@ FOR EACH ROW
 BEGIN
     UPDATE Böcker
     SET Lagerstatus = Lagerstatus - NEW.Antal
-    WHERE ProduktID = NEW.ProduktID;
+    WHERE ISBN = NEW.ISBN;
 END $$ 
 
-DELIMITER;
+DELIMITER ;
 
 -- Skapa en trigger som loggar när en ny kund registreras
+CREATE TABLE KunderLogg (
+LoggID INT AUTO_INCREMENT PRIMARY KEY,
+KundID INT,
+RegistreringsDatum TIMESTAMP CURRENT_TIMESTAMP,
+FOREIGN KEY (KundID) REFERENCES Kunder(KundID)
+);
+
 DELIMITER $$
 
 CREATE TRIGGER logga_nykund
 AFTER INSERT ON Kunder
 FOR EACH ROW
 BEGIN
-    SELECT * FROM Kunder
-    WHERE KundID = NEW.KundID;
+    INSERT INTO KunderLogg(KundID)
+    VALUES (NEW.KundID)
 END $$
 
-DELIMITER;
+DELIMITER ;
 
 -- 6: backup & restore
 
