@@ -109,10 +109,11 @@ SET Email = 'aarenbs@hotmail.com'
 WHERE KundID = '1';
 
 DELETE FROM Kunder WHERE KundID = 2;
+-- Kolla om kunden är raderad:
 SELECT * FROM Kunder;
 
 ROLLBACK;
-
+-- Kolla om rollbak har funkat:
 SELECT * FROM Kunder;
 
 -- 4: Arbeta med JOINs & GROUP BY
@@ -151,11 +152,16 @@ HAVING COUNT(Beställningar.Ordernummer) > 2;
 CREATE INDEX idx_email
 ON Kunder (Email);
 
+-- Kolla vilka indexs som finns för att säkerställa idx_email:
 SHOW INDEX FROM Kunder;
 
 -- Införa en constraint som säkerställer att priset på produkter alltid är över 0
 ALTER TABLE Böcker
-ADD CONSTRAINT Check_pris CHECK(Pris > 0)
+ADD CONSTRAINT Check_pris CHECK(Pris > 0);
+
+-- Kolla om constraint funkar genom att försöka skapa produkt med negativt pris:
+INSERT INTO Böcker (ISBN, Titel, Författare, Lagerstatus, Pris) VALUES
+('123445677', 'Test', 'Tester', '10', '-10');
 
 -- Skapa en trigger som minska lagersaldo efter en order
 DELIMITER $$
@@ -171,11 +177,17 @@ END $$
 
 DELIMITER ;
 
+-- Testa trigger för lagersaldo
+SELECT * FROM Böcker;
+INSERT INTO Orderrader (ISBN, Ordernummer, Antal) VALUES
+('9781728206141', 1, 1);
+SELECT * FROM Böcker;
+
 -- Skapa en trigger som loggar när en ny kund registreras
 CREATE TABLE KunderLogg (
 LoggID INT AUTO_INCREMENT PRIMARY KEY,
 KundID INT,
-RegistreringsDatum TIMESTAMP CURRENT_TIMESTAMP,
+RegistreringsDatum TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 FOREIGN KEY (KundID) REFERENCES Kunder(KundID)
 );
 
@@ -186,10 +198,15 @@ AFTER INSERT ON Kunder
 FOR EACH ROW
 BEGIN
     INSERT INTO KunderLogg(KundID)
-    VALUES (NEW.KundID)
+    VALUES (NEW.KundID);
 END $$
 
 DELIMITER ;
+
+INSERT INTO Kunder (Namn, Email, Telefon, Address) VALUES
+('Test trigger', 'test@gmail.com', '070000000', 'Kalmarvägen 1, 333 33 Kalmar');
+
+SELECT * FROM KunderLogg;
 
 -- 6: backup & restore
 
