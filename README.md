@@ -1,5 +1,14 @@
-# databas_inlamning2
-Inlämning 2 till min databas kurs :)
+# Databas Inlämning 2
+Av: Aaren Bertilsson YH25
+
+Denna SQL databasen är för en liten bokhandel, den består av:
+- Böcker
+- Kunder
+- Beställningar
+- Orderrader
+
+[ER Diagram](images/er-diagram.png)
+
 
 
 ## Reflektion och analys av databaslösning
